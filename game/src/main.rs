@@ -38,7 +38,7 @@ fn main() {
                 game::ships::player_movement,
                 game::ships::laser_movement,
                 game::aliens::alien_movement,
-                game::aliens::alien_collision_detection,
+                game::aliens::ship_laser_collision_detection,
             )
                 .run_if(in_state(GameState::InGame)),
         )

@@ -1,23 +1,29 @@
 use bevy::prelude::*;
 
-use super::Laser;
+use crate::game::ships::ShipLaser;
 
-#[derive(Component)]
-pub struct Alien {
+const VELOCITY: f32 = 100.0; // pixels per second
+
+pub trait Alien: Default + Bundle {
+    /// Returns the point value of this alien.
+    fn point_value(&self) -> u32;
+}
+
+#[derive(Component, Default)]
+pub struct LowLevelAlien {
     movement: AlienMovement,
 }
 
-impl Default for Alien {
-    fn default() -> Self {
-        Self {
-            movement: AlienMovement::Right,
-        }
+impl Alien for LowLevelAlien {
+    fn point_value(&self) -> u32 {
+        10
     }
 }
 
-#[derive(Copy, Clone, Component, PartialEq)]
+#[derive(Copy, Clone, Component, PartialEq, Default)]
 pub enum AlienMovement {
     Left,
+    #[default]
     Right,
     Down {
         pixels_left_to_move: f32,
@@ -25,9 +31,8 @@ pub enum AlienMovement {
     },
 }
 
-pub fn alien_movement(time: Res<Time>, mut query: Query<(&mut Alien, &mut Transform)>) {
+pub fn alien_movement(time: Res<Time>, mut query: Query<(&mut LowLevelAlien, &mut Transform)>) {
     let dt = time.delta_seconds();
-    const VELOCITY: f32 = 100.0; // pixels per second
     let pixels_moved_this_frame = VELOCITY * dt;
 
     let mut aliens = query.iter_mut().collect::<Vec<_>>();
@@ -70,9 +75,9 @@ pub fn alien_movement(time: Res<Time>, mut query: Query<(&mut Alien, &mut Transf
     let any_out_of_bounds = positions.iter().any(|(_, pos)| pos.x.abs() > 300.0);
 }
 
-pub fn alien_collision_detection(
-    laser_query: Query<(Entity, &Laser, &Transform)>,
-    collider_query: Query<(Entity, &Alien, &Transform)>,
+pub fn ship_laser_collision_detection(
+    laser_query: Query<(Entity, &ShipLaser, &Transform)>,
+    collider_query: Query<(Entity, &LowLevelAlien, &Transform)>,
     mut commands: Commands,
 ) {
     for (laser_entity, _, laser_transform) in laser_query.iter() {
