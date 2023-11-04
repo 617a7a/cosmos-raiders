@@ -11,7 +11,7 @@ pub enum MainMenuButtonId {
     Settings,
 }
 
-pub fn setup_menu(mut commands: Commands, assets: Res<AssetServer>, mut scale: ResMut<UiScale>) {
+pub fn setup_sys(mut commands: Commands, assets: Res<AssetServer>, mut scale: ResMut<UiScale>) {
     scale.scale = 2.0;
 
     rooti(c_root, &assets, &mut commands, MenuMarker, |p| {
@@ -33,7 +33,7 @@ pub fn setup_menu(mut commands: Commands, assets: Res<AssetServer>, mut scale: R
 #[derive(Component, Debug)]
 pub struct MenuMarker;
 
-pub fn handle_menu_interactions(
+pub fn handle_menu_interactions_sys(
     ui_entities: Query<(&MainMenuButtonId, &Interaction), Changed<Interaction>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
@@ -48,19 +48,19 @@ pub fn handle_menu_interactions(
     }
 }
 
-pub fn remove_menu(mut commands: Commands, menu_entities: Query<Entity, With<MenuMarker>>) {
+pub fn remove_menu_sys(mut commands: Commands, menu_entities: Query<Entity, With<MenuMarker>>) {
     for e in &mut menu_entities.iter() {
         commands.entity(e).despawn_recursive();
     }
 }
 
 // ----- Classes (they're really just callback functions that modify bundles / text styles, but it's useful to think of them as .css classes) -----
-pub fn c_root(b: &mut NodeBundle) {
+fn c_root(b: &mut NodeBundle) {
     b.style.width = Val::Percent(100.);
     b.style.height = Val::Percent(100.)
 }
 
-pub fn c_half(b: &mut NodeBundle) {
+fn c_half(b: &mut NodeBundle) {
     let s = &mut b.style;
     s.width = Val::Percent(50.);
     s.height = Val::Percent(100.);
@@ -70,29 +70,28 @@ pub fn c_half(b: &mut NodeBundle) {
     s.padding = UiRect::all(Val::Px(10.));
 }
 
-pub fn c_black(b: &mut NodeBundle) {
+fn c_black(b: &mut NodeBundle) {
     b.background_color = BLACK.into();
 }
 
-pub fn c_blue(b: &mut NodeBundle) {
+fn c_blue(b: &mut NodeBundle) {
     b.background_color = Color::rgb_u8(125, 164, 212).into();
 }
 
-pub fn text_box(_a: &AssetServer, b: &mut TextBundle) {
+fn text_box(_a: &AssetServer, b: &mut TextBundle) {
     b.style.margin = UiRect::all(Val::Px(10.));
 }
 
-pub fn left_btn_c(assets: &AssetServer, b: &mut ButtonBundle) {
+fn left_btn_c(_a: &AssetServer, b: &mut ButtonBundle) {
     let s = &mut b.style;
     s.width = Val::Px(128.);
     s.height = Val::Px(24.);
     s.justify_content = JustifyContent::Center;
     s.align_items = AlignItems::Center;
     b.background_color = Color::rgb_u8(66, 135, 245).into();
-    // b.image = assets.load("button.png").into();
 }
 
-pub fn text_styling_c(assets: &AssetServer, s: &mut TextStyle) {
+fn text_styling_c(assets: &AssetServer, s: &mut TextStyle) {
     s.font = assets.load("fonts/space_invaders.ttf").into();
     s.font_size = 16.;
     s.color = Color::WHITE.into();

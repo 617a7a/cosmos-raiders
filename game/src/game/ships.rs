@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 
-use super::AtlasIndexable;
+use super::{AtlasIndexable, Spawnable};
 
 #[derive(Component, Default)]
 pub struct PlayerShip {
@@ -15,20 +15,12 @@ impl PlayerShip {
     const ACCELERATION: f32 = 70.0; // pixels per second per second
     const MAX_VELOCITY: f32 = 1500.0; // pixels per second
 
-    fn fire_laser(commands: &mut Commands, player_pos: Vec3, atlas_handle: &Handle<TextureAtlas>) {
-        commands.spawn((
-            Laser {},
-            SpriteSheetBundle {
-                texture_atlas: atlas_handle.clone(),
-                transform: Transform::from_translation(Vec3::new(
-                    player_pos.x,
-                    player_pos.y + 24.0,
-                    0.0,
-                )),
-                sprite: TextureAtlasSprite::new(2),
-                ..Default::default()
-            },
-        ));
+    fn fire_laser(commands: &mut Commands, player_pos: Vec3, atlas_handle: Handle<TextureAtlas>) {
+        Laser::spawn(
+            Vec3::new(player_pos.x, player_pos.y + 24.0, 0.0),
+            atlas_handle,
+            commands,
+        );
     }
 
     fn accelerate_left(&mut self, dt: f32) {
@@ -73,14 +65,18 @@ impl PlayerShip {
             player.apply_delta_x(&mut trans.translation, window.width());
 
             if keyboard_input.just_pressed(KeyCode::Space) {
-                PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle)
+                PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone())
             }
         }
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Laser;
+
+impl AtlasIndexable for Laser {
+    const SPRITE_INDEX: usize = 2;
+}
 
 impl Laser {
     const VELOCITY: f32 = 480.0; // pixels per second
@@ -91,22 +87,26 @@ impl Laser {
     }
 
     /// Despawn the laser if it goes off the top of the screen
-    fn despawn_if_needed(&self, pos: &mut Vec3, commands: &mut Commands, entity: Entity) {
-        if pos.y > 240.0 {
-            commands.entity(entity).despawn();
-        }
+    fn needs_despawn(&self, pos: &mut Vec3, window_height: f32) -> bool {
+        pos.y > window_height / 2.0
     }
 
     pub fn movement_sys(
         time: Res<Time>,
         mut lasers: Query<(Entity, &mut Laser, &mut Transform)>,
         mut commands: Commands,
+        windows: Query<&Window, With<PrimaryWindow>>,
     ) {
+        let Ok(window) = windows.get_single() else {
+            return;
+        };
         let dt = time.delta_seconds();
         for (entity, mut laser, mut trans) in lasers.iter_mut() {
             let pos = &mut trans.translation;
             laser.update_position(dt, pos);
-            laser.despawn_if_needed(pos, &mut commands, entity)
+            if laser.needs_despawn(pos, window.height()) {
+                commands.entity(entity).despawn();
+            }
         }
     }
 }

@@ -2,14 +2,14 @@ use bevy::prelude::*;
 use bevy_framepace::FramepacePlugin;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use bevy_tokio_tasks::TokioTasksPlugin;
-use ui::menu::*;
+use game::aliens::AlienMovement;
 mod game;
 mod ui;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 enum GameState {
     #[default]
-    Menu,
+    MainMenu,
     InGame,
 }
 
@@ -22,16 +22,22 @@ fn main() {
             }),
             ..default()
         }))
+        // background color
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_state::<GameState>()
-        .add_systems(Startup, setup)
-        .add_systems(OnEnter(GameState::Menu), setup_menu)
-        .add_systems(OnExit(GameState::Menu), remove_menu)
-        .add_systems(OnEnter(GameState::InGame), game::setup)
+        .insert_resource(AlienMovement::default())
+        .add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Camera2dBundle::default());
+        })
+        // main menu systems
+        .add_systems(OnEnter(GameState::MainMenu), ui::menu::setup_sys)
+        .add_systems(OnExit(GameState::MainMenu), ui::menu::remove_menu_sys)
         .add_systems(
             Update,
-            handle_menu_interactions.run_if(in_state(GameState::Menu)),
+            ui::menu::handle_menu_interactions_sys.run_if(in_state(GameState::MainMenu)),
         )
+        // game systems
+        .add_systems(OnEnter(GameState::InGame), game::setup_sys)
         .add_systems(
             Update,
             (
@@ -53,8 +59,4 @@ fn main() {
             FramepacePlugin,
         ))
         .run();
-}
-
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
 }
