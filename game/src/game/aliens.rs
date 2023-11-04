@@ -4,8 +4,6 @@ use crate::game::ships::Laser;
 
 use super::AtlasIndexable;
 
-const VELOCITY: f32 = 100.0; // pixels per second
-
 #[derive(Component, Default)]
 pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize> {
     movement: AlienMovement,
@@ -30,6 +28,8 @@ impl<const P: u32, const I: usize> AtlasIndexable for Alien<P, I> {
 }
 
 impl<const P: u32, const I: usize> Alien<P, I> {
+    const VELOCITY: f32 = 100.0; // pixels per second
+
     fn point_value() -> u32 {
         P
     }
@@ -88,7 +88,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
 
     pub fn movement_sys(time: Res<Time>, mut query: Query<(&mut LowLevelAlien, &mut Transform)>) {
         let dt = time.delta_seconds();
-        let pixels_moved_this_frame = VELOCITY * dt;
+        let pixels_moved_this_frame = Alien::<P, I>::VELOCITY * dt;
 
         let mut aliens = query.iter_mut().collect::<Vec<_>>();
         let mut positions: Vec<(usize, Vec3)> = Vec::with_capacity(aliens.len());
