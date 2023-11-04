@@ -6,20 +6,23 @@ use bevy::prelude::*;
 
 use self::{aliens::LowLevelAlien, ships::PlayerShip};
 
-pub trait Spawnable {
+pub trait Spawnable: Component {
     fn spawn(pos: Vec3, texture_atlas: Handle<TextureAtlas>, commands: &mut Commands);
 }
 
-// Implement the Spawnable trait for any type that implements the Bundle trait and the Default trait.
-// This allows us to use the spawn method on any type that implements both of those traits.
-impl<T: Bundle + Default> Spawnable for T {
+pub trait AtlasIndexable: Component {
+    /// The index of the sprite in the texture atlas.
+    const SPRITE_INDEX: usize;
+}
+
+impl<T: AtlasIndexable + Default> Spawnable for T {
     fn spawn(pos: Vec3, texture_atlas: Handle<TextureAtlas>, commands: &mut Commands) {
         commands.spawn((
             T::default(),
             SpriteSheetBundle {
                 texture_atlas,
                 transform: Transform::from_translation(pos),
-                sprite: TextureAtlasSprite::new(1),
+                sprite: TextureAtlasSprite::new(Self::SPRITE_INDEX),
                 ..Default::default()
             },
         ));

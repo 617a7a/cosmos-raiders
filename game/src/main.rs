@@ -35,10 +35,10 @@ fn main() {
         .add_systems(
             Update,
             (
-                game::ships::player_movement,
-                game::ships::laser_movement,
-                game::aliens::alien_movement,
-                game::aliens::ship_laser_collision_detection,
+                game::ships::PlayerShip::movement_sys,
+                game::ships::Laser::movement_sys,
+                game::aliens::LowLevelAlien::movement_sys,
+                game::aliens::LowLevelAlien::laser_collision_sys,
             )
                 .run_if(in_state(GameState::InGame)),
         )
