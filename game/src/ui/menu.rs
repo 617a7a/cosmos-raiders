@@ -54,7 +54,8 @@ pub fn remove_menu_sys(mut commands: Commands, menu_entities: Query<Entity, With
     }
 }
 
-// ----- Classes (they're really just callback functions that modify bundles / text styles, but it's useful to think of them as .css classes) -----
+// ----- Classes (they're really just callback functions that modify bundles /
+// text styles, but it's useful to think of them as .css classes) -----
 fn c_root(b: &mut NodeBundle) {
     b.style.width = Val::Percent(100.);
     b.style.height = Val::Percent(100.)

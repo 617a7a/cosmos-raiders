@@ -43,7 +43,7 @@ fn main() {
             (
                 game::ships::PlayerShip::movement_sys,
                 game::ships::Laser::movement_sys,
-                game::aliens::LowLevelAlien::movement_sys,
+                // game::aliens::LowLevelAlien::movement_sys,
                 game::aliens::LowLevelAlien::laser_collision_sys,
             )
                 .run_if(in_state(GameState::InGame)),

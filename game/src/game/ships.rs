@@ -54,11 +54,11 @@ impl PlayerShip {
         };
 
         for (mut player, mut trans, atlas_handle) in player_ships.iter_mut() {
-            if keyboard_input.pressed(KeyCode::Left) {
+            if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
                 player.accelerate_left(dt)
             }
 
-            if keyboard_input.pressed(KeyCode::Right) {
+            if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::A) {
                 player.accelerate_right(dt)
             }
 

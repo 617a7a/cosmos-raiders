@@ -28,10 +28,7 @@ impl<const P: u32, const I: usize> AtlasIndexable for Alien<P, I> {
 impl<const P: u32, const I: usize> Alien<P, I> {
     const VELOCITY: f32 = 100.0; // pixels per second
     const COLLISION_RADIUS: f32 = 16.9705627485; // sqrt(12^2 + 12^2)
-
-    fn point_value() -> u32 {
-        P
-    }
+    const POINT_VALUE: u32 = P;
 
     fn next_pos(&self, movement: AlienMovement, mut current: Vec3, ds: f32) -> Vec3 {
         match movement {
@@ -80,8 +77,9 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         let dt = time.delta_seconds();
         let pixels_moved_this_frame = Alien::<P, I>::VELOCITY * dt;
 
-        // aliens start at the left side of the screen, so their first movement is right
-        // we keep moving right until any of the alien's abs(x-coord) > 300
-        // then we move down for 12 pixels, then left.
+        // aliens start at the left side of the screen, so their first movement
+        // is right we keep moving right until any of the alien's
+        // abs(x-coord) > 300 then we move down for 12 pixels, then
+        // left.
     }
 }
