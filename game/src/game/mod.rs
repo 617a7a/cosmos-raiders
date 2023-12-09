@@ -6,6 +6,9 @@ use bevy::prelude::*;
 
 use self::{aliens::LowLevelAlien, ships::PlayerShip};
 
+#[derive(Resource, Default)]
+pub struct Score(pub u32);
+
 pub trait Spawnable: Component {
     fn spawn(pos: Vec3, texture_atlas: Handle<TextureAtlas>, commands: &mut Commands);
 }

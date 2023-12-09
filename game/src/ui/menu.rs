@@ -11,7 +11,18 @@ pub enum MainMenuButtonId {
     Settings,
 }
 
-pub fn setup_sys(mut commands: Commands, assets: Res<AssetServer>, mut scale: ResMut<UiScale>) {
+pub fn setup_sys(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut scale: ResMut<UiScale>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    // if "--skip-menu" is passed as a command line argument, skip the menu
+    if std::env::args().any(|s| s == "--skip-menu") {
+        next_state.set(GameState::InGame);
+        info!("Skipping menu, going straight to game");
+        return;
+    }
     scale.scale = 2.0;
 
     rooti(c_root, &assets, &mut commands, MenuMarker, |p| {
