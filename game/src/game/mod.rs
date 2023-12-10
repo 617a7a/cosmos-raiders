@@ -6,7 +6,7 @@ use bevy::prelude::*;
 
 use self::{aliens::LowLevelAlien, ships::PlayerShip};
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct Score(pub u32);
 
 pub trait Spawnable: Component {
@@ -31,6 +31,11 @@ impl<T: AtlasIndexable + Default> Spawnable for T {
         ));
     }
 }
+
+const SCOREBOARD_FONT_SIZE: f32 = 24.0;
+const SCOREBOARD_TEXT_PADDING: Val = Val::Px(5.0);
+const TEXT_COLOR: Color = Color::rgb(1.0, 1.0, 1.0);
+const SCORE_COLOR: Color = Color::rgb(1.0, 0.5, 0.5);
 
 pub fn setup_sys(
     mut commands: Commands,
@@ -59,4 +64,38 @@ pub fn setup_sys(
             );
         }
     }
+
+    commands.spawn((
+        Scoreboard,
+        TextBundle::from_sections([
+            TextSection::new(
+                "Score: ",
+                TextStyle {
+                    font_size: SCOREBOARD_FONT_SIZE,
+                    color: TEXT_COLOR,
+                    ..default()
+                },
+            ),
+            TextSection::from_style(TextStyle {
+                font_size: SCOREBOARD_FONT_SIZE,
+                color: SCORE_COLOR,
+                ..default()
+            }),
+        ])
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            top: SCOREBOARD_TEXT_PADDING,
+            left: SCOREBOARD_TEXT_PADDING,
+            ..default()
+        }),
+    ));
+}
+
+/// marker component for the scoreboard
+#[derive(Component, Default)]
+pub struct Scoreboard;
+
+pub fn update_scoreboard_sys(score: Res<Score>, mut query: Query<(With<Scoreboard>, &mut Text)>) {
+    let mut text = query.single_mut().1;
+    text.sections[1].value = score.0.to_string();
 }

@@ -26,7 +26,7 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_state::<GameState>()
         .insert_resource(AlienMovement::default())
-        .insert_resource(Score::default())
+        .insert_resource(Score(0))
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2dBundle::default());
         })
@@ -46,6 +46,7 @@ fn main() {
                 game::ships::Laser::movement_sys,
                 game::aliens::LowLevelAlien::movement_sys,
                 game::aliens::LowLevelAlien::laser_collision_sys,
+                game::update_scoreboard_sys,
             )
                 .run_if(in_state(GameState::InGame)),
         )
