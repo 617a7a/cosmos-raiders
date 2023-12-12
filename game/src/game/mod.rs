@@ -1,4 +1,5 @@
 pub mod aliens;
+pub mod explosions;
 pub mod shields;
 pub mod ships;
 

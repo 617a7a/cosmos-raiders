@@ -50,6 +50,7 @@ fn main() {
                 game::aliens::LowLevelAlien::laser_collision_sys,
                 game::aliens::LowLevelAlien::respawn_sys,
                 game::update_scoreboard_sys,
+                game::explosions::explosion_removal_sys,
             )
                 .run_if(in_state(GameState::InGame)),
         )

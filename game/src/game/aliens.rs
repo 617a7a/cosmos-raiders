@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::{ships::Laser, Score};
 
-use super::{AssetHandles, AtlasIndexable, Spawnable};
+use super::{explosions::Explosion, AssetHandles, AtlasIndexable, Spawnable};
 
 #[derive(Component, Default)]
 pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize>;
@@ -56,14 +56,14 @@ impl<const P: u32, const I: usize> Alien<P, I> {
     }
 
     pub fn laser_collision_sys(
-        lasers: Query<(Entity, &Laser, &Transform)>,
-        aliens: Query<(Entity, &Alien<P, I>, &Transform)>,
+        lasers: Query<(Entity, &Transform), With<Laser>>,
+        aliens: Query<(Entity, &Transform), With<Alien<P, I>>>,
         mut commands: Commands,
         mut score: ResMut<Score>,
         asset_handles: Res<AssetHandles>,
     ) {
-        for (laser_entity, _, laser_transform) in lasers.iter() {
-            for (alien_entity, _, alien_transform) in aliens.iter() {
+        for (laser_entity, laser_transform) in lasers.iter() {
+            for (alien_entity, alien_transform) in aliens.iter() {
                 if alien_transform
                     .translation
                     .distance(laser_transform.translation)
@@ -76,6 +76,11 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                         source: asset_handles.explosion_sound.clone(),
                         ..Default::default()
                     });
+                    Explosion::spawn(
+                        alien_transform.translation,
+                        asset_handles.texture_atlas.clone(),
+                        &mut commands,
+                    );
                 }
             }
         }
