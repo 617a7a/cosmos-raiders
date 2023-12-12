@@ -3,8 +3,11 @@ use bevy_framepace::FramepacePlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
+use bevy_spatial::{AutomaticUpdate, SpatialStructure, TransformMode};
 use bevy_tokio_tasks::TokioTasksPlugin;
 use game::{aliens::AlienMovement, scoreboard::Score};
+use crate::game::aliens::{Alien, AlienMarker};
+
 mod game;
 mod ui;
 
@@ -20,12 +23,13 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Cosmos Raiders".to_string(),
-                resolution: WindowResolution::new(852.0, 393.0),
+                resolution: WindowResolution::new(700.0, 700.0),
                 ..default()
             }),
             ..default()
         }))
         // .add_plugins(WorldInspectorPlugin::new())
+        .add_plugins(AutomaticUpdate::<AlienMarker>::new().with_transform(TransformMode::GlobalTransform).with_spatial_ds(SpatialStructure::KDTree2))
         // background color
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_state::<GameState>()
@@ -51,6 +55,12 @@ fn main() {
                 game::aliens::LowLevelAlien::movement_sys,
                 game::aliens::LowLevelAlien::laser_collision_sys,
                 game::aliens::LowLevelAlien::respawn_sys,
+                game::aliens::MidLevelAlien::movement_sys,
+                game::aliens::MidLevelAlien::laser_collision_sys,
+                game::aliens::MidLevelAlien::respawn_sys,
+                game::aliens::HighLevelAlien::movement_sys,
+                game::aliens::HighLevelAlien::laser_collision_sys,
+                game::aliens::HighLevelAlien::respawn_sys,
                 game::scoreboard::update_sys,
                 game::explosions::explosion_removal_sys,
             )
