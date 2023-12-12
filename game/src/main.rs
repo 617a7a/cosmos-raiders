@@ -3,7 +3,7 @@ use bevy_framepace::FramepacePlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use bevy_tokio_tasks::TokioTasksPlugin;
-use game::{aliens::AlienMovement, Score};
+use game::{aliens::AlienMovement, scoreboard::Score};
 mod game;
 mod ui;
 
@@ -49,7 +49,7 @@ fn main() {
                 game::aliens::LowLevelAlien::movement_sys,
                 game::aliens::LowLevelAlien::laser_collision_sys,
                 game::aliens::LowLevelAlien::respawn_sys,
-                game::update_scoreboard_sys,
+                game::scoreboard::update_sys,
                 game::explosions::explosion_removal_sys,
             )
                 .run_if(in_state(GameState::InGame)),

@@ -1,14 +1,12 @@
 pub mod aliens;
 pub mod explosions;
+pub mod scoreboard;
 pub mod shields;
 pub mod ships;
 
 use bevy::prelude::*;
 
-use self::{aliens::spawn_aliens, ships::PlayerShip};
-
-#[derive(Resource)]
-pub struct Score(pub u32);
+use self::{aliens::spawn_aliens, scoreboard::spawn_scoreboard, ships::PlayerShip};
 
 pub trait Spawnable: Component {
     fn spawn(pos: Vec3, texture_atlas: Handle<TextureAtlas>, commands: &mut Commands);
@@ -32,10 +30,6 @@ impl<T: AtlasIndexable + Default> Spawnable for T {
         ));
     }
 }
-
-const SCOREBOARD_FONT_SIZE: f32 = 24.0;
-const SCOREBOARD_TEXT_PADDING: Val = Val::Px(36.0);
-const TEXT_COLOR: Color = Color::rgb(1.0, 1.0, 1.0);
 
 #[derive(Resource)]
 pub struct AssetHandles {
@@ -71,42 +65,4 @@ pub fn setup_sys(
 
     spawn_aliens(&mut commands, &texture_atlas_handle);
     spawn_scoreboard(&mut commands, font);
-}
-
-fn spawn_scoreboard(commands: &mut Commands, font: Handle<Font>) {
-    commands.spawn((
-        Scoreboard,
-        TextBundle::from_sections([
-            TextSection::new(
-                "Score: ",
-                TextStyle {
-                    font_size: SCOREBOARD_FONT_SIZE,
-                    font: font.clone(),
-                    color: TEXT_COLOR,
-                    ..default()
-                },
-            ),
-            TextSection::from_style(TextStyle {
-                font_size: SCOREBOARD_FONT_SIZE,
-                font,
-                color: TEXT_COLOR,
-                ..default()
-            }),
-        ])
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: SCOREBOARD_TEXT_PADDING,
-            left: SCOREBOARD_TEXT_PADDING,
-            ..default()
-        }),
-    ));
-}
-
-/// marker component for the scoreboard
-#[derive(Component, Default)]
-pub struct Scoreboard;
-
-pub fn update_scoreboard_sys(score: Res<Score>, mut query: Query<(With<Scoreboard>, &mut Text)>) {
-    let mut text = query.single_mut().1;
-    text.sections[1].value = score.0.to_string();
 }

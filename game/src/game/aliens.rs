@@ -1,6 +1,7 @@
+use crate::game::scoreboard::Score;
 use bevy::prelude::*;
 
-use crate::game::{ships::Laser, Score};
+use crate::game::ships::Laser;
 
 use super::{explosions::Explosion, AssetHandles, AtlasIndexable, Spawnable};
 
@@ -88,7 +89,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
 
     pub fn movement_sys(
         time: Res<Time>,
-        mut query: Query<(&mut Alien<P, I>, &mut Transform)>,
+        mut query: Query<&mut Transform, With<Alien<P, I>>>,
         mut movement: ResMut<AlienMovement>,
     ) {
         let dt = time.delta_seconds();
@@ -96,12 +97,12 @@ impl<const P: u32, const I: usize> Alien<P, I> {
 
         match *movement {
             AlienMovement::Left => {
-                for (_, mut transform) in query.iter_mut() {
+                for mut transform in query.iter_mut() {
                     transform.translation.x -= pixels_moved_this_frame;
                 }
                 let left_most_position = query
                     .iter()
-                    .map(|(_, t)| t.translation.x)
+                    .map(|t| t.translation.x)
                     .fold(f32::INFINITY, f32::min);
                 if left_most_position <= -SCREEN_BOUNDARY_X {
                     *movement = AlienMovement::Down {
@@ -111,12 +112,12 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                 }
             }
             AlienMovement::Right => {
-                for (_, mut transform) in query.iter_mut() {
+                for mut transform in query.iter_mut() {
                     transform.translation.x += pixels_moved_this_frame;
                 }
                 let right_most_position = query
                     .iter()
-                    .map(|(_, t)| t.translation.x)
+                    .map(|t| t.translation.x)
                     .fold(f32::NEG_INFINITY, f32::max);
                 if right_most_position >= SCREEN_BOUNDARY_X {
                     *movement = AlienMovement::Down {
@@ -129,7 +130,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                 ref mut pixels_left_to_move,
                 should_move_left_after,
             } => {
-                for (_, mut transform) in query.iter_mut() {
+                for mut transform in query.iter_mut() {
                     // Move the alien down
                     let move_down = f32::min(*pixels_left_to_move, pixels_moved_this_frame);
                     transform.translation.y -= move_down;
