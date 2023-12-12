@@ -19,7 +19,7 @@ pub enum AlienMovement {
 }
 
 /// A low-level alien is an alien with 10 points and sprite index 1.
-pub type LowLevelAlien = Alien<10, 1>;
+pub type LowLevelAlien = Alien<10, 4>;
 /// A mid-level alien is an alien with 20 points and sprite index 2.
 pub type MidLevelAlien = Alien<20, 2>;
 /// A high-level alien is an alien with 30 points and sprite index 3.
@@ -156,10 +156,10 @@ impl<const P: u32, const I: usize> Alien<P, I> {
 const SCREEN_BOUNDARY_X: f32 = 300.0;
 
 pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<TextureAtlas>) {
-    for alien_row in 0..2 {
-        let y = 200.0 - (alien_row as f32 * 30.0);
+    for alien_row in 0..5 {
+        let y = 200.0 - (alien_row as f32 * 32.0);
         for alien_col in 0..11 {
-            let x = -300.0 + (alien_col as f32 * 30.0);
+            let x = -300.0 + (alien_col as f32 * 32.0);
             LowLevelAlien::spawn(Vec3::new(x, y, 0.0), texture_atlas_handle.clone(), commands);
         }
     }

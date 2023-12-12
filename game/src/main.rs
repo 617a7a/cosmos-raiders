@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::WindowResolution};
 use bevy_framepace::FramepacePlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -19,6 +19,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Cosmos Raiders".to_string(),
+                resolution: WindowResolution::new(700.0, 700.0),
                 ..default()
             }),
             ..default()
@@ -60,7 +61,7 @@ fn main() {
                 font: Some("fonts/space_invaders.ttf"),
                 ..default()
             },
-         #[cfg(feature = "fps_counter")]
+            #[cfg(feature = "fps_counter")]
             ScreenFrameDiagnosticsPlugin,
             FramepacePlugin,
         ))

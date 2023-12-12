@@ -8,7 +8,7 @@ pub struct PlayerShip {
 }
 
 impl AtlasIndexable for PlayerShip {
-    const SPRITE_INDEX: usize = 0;
+    const SPRITE_INDEX: usize = 13;
 }
 
 impl PlayerShip {
@@ -80,7 +80,7 @@ impl PlayerShip {
 pub struct Laser;
 
 impl AtlasIndexable for Laser {
-    const SPRITE_INDEX: usize = 2;
+    const SPRITE_INDEX: usize = 10;
 }
 
 impl Laser {

@@ -35,7 +35,6 @@ impl<T: AtlasIndexable + Default> Spawnable for T {
 const SCOREBOARD_FONT_SIZE: f32 = 24.0;
 const SCOREBOARD_TEXT_PADDING: Val = Val::Px(36.0);
 const TEXT_COLOR: Color = Color::rgb(1.0, 1.0, 1.0);
-const SCORE_COLOR: Color = Color::rgb(1.0, 0.5, 0.5);
 
 #[derive(Resource)]
 pub struct AssetHandles {
@@ -50,9 +49,9 @@ pub fn setup_sys(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let texture_handle = asset_server.load("spritesheet.png");
+    let texture_handle = asset_server.load("sprites.png");
     let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 3, 1, None, None);
+        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 2, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let font = asset_server.load("fonts/space_invaders.ttf");
 
