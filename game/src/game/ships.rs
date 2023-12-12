@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 
-use super::{AtlasIndexable, Spawnable};
+use super::{AssetHandles, AtlasIndexable, Spawnable};
 
 #[derive(Component, Default)]
 pub struct PlayerShip {
@@ -46,6 +46,7 @@ impl PlayerShip {
         mut commands: Commands,
         mut player_ships: Query<(&mut PlayerShip, &mut Transform, &Handle<TextureAtlas>)>,
         windows: Query<&Window, With<PrimaryWindow>>,
+        asset_handles: Res<AssetHandles>,
     ) {
         let dt = time.delta_seconds();
 
@@ -65,7 +66,11 @@ impl PlayerShip {
             player.apply_delta_x(&mut trans.translation, window.width());
 
             if keyboard_input.just_pressed(KeyCode::Space) {
-                PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone())
+                PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
+                commands.spawn(AudioBundle {
+                    source: asset_handles.shoot_sound.clone(),
+                    ..default()
+                });
             }
         }
     }

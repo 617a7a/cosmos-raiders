@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::{ships::Laser, Score};
 
-use super::{AtlasIndexable, Spawnable, AssetHandles};
+use super::{AssetHandles, AtlasIndexable, Spawnable};
 
 #[derive(Component, Default)]
 pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize>;
@@ -60,6 +60,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         aliens: Query<(Entity, &Alien<P, I>, &Transform)>,
         mut commands: Commands,
         mut score: ResMut<Score>,
+        asset_handles: Res<AssetHandles>,
     ) {
         for (laser_entity, _, laser_transform) in lasers.iter() {
             for (alien_entity, _, alien_transform) in aliens.iter() {
@@ -71,7 +72,10 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                     commands.entity(alien_entity).despawn();
                     commands.entity(laser_entity).despawn();
                     score.0 += Alien::<P, I>::POINT_VALUE;
-                    info!("Score: {}", score.0);
+                    commands.spawn(AudioBundle {
+                        source: asset_handles.explosion_sound.clone(),
+                        ..Default::default()
+                    });
                 }
             }
         }
@@ -139,7 +143,11 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         }
     }
 
-    pub fn respawn_sys(aliens: Query<(Entity, &Alien<P, I>, &Transform)>, mut commands: Commands, asset_handles: Res<AssetHandles>) {
+    pub fn respawn_sys(
+        aliens: Query<(Entity, &Alien<P, I>, &Transform)>,
+        mut commands: Commands,
+        asset_handles: Res<AssetHandles>,
+    ) {
         if aliens.iter().len() == 0 {
             spawn_aliens(&mut commands, &asset_handles.texture_atlas)
         }
