@@ -4,7 +4,7 @@ pub mod ships;
 
 use bevy::prelude::*;
 
-use self::{aliens::LowLevelAlien, ships::PlayerShip};
+use self::{aliens::{LowLevelAlien, spawn_aliens}, ships::PlayerShip};
 
 #[derive(Resource)]
 pub struct Score(pub u32);
@@ -37,6 +37,11 @@ const SCOREBOARD_TEXT_PADDING: Val = Val::Px(5.0);
 const TEXT_COLOR: Color = Color::rgb(1.0, 1.0, 1.0);
 const SCORE_COLOR: Color = Color::rgb(1.0, 0.5, 0.5);
 
+#[derive(Resource)]
+pub struct AssetHandles {
+    pub texture_atlas: Handle<TextureAtlas>
+}
+
 pub fn setup_sys(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -47,23 +52,17 @@ pub fn setup_sys(
         TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 3, 1, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
+    commands.insert_resource(AssetHandles {
+        texture_atlas: texture_atlas_handle.clone(),
+    });
+
     PlayerShip::spawn(
         Vec3::new(0.0, -220.0, 0.0),
         texture_atlas_handle.clone(),
         &mut commands,
     );
 
-    for alien_row in 0..2 {
-        let y = 200.0 - (alien_row as f32 * 30.0);
-        for alien_col in 0..11 {
-            let x = -300.0 + (alien_col as f32 * 30.0);
-            LowLevelAlien::spawn(
-                Vec3::new(x, y, 0.0),
-                texture_atlas_handle.clone(),
-                &mut commands,
-            );
-        }
-    }
+    spawn_aliens(&mut commands, &texture_atlas_handle);
 
     commands.spawn((
         Scoreboard,

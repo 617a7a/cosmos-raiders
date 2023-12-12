@@ -13,3 +13,6 @@ bevy_framepace = "0.13.3"
 bevy_screen_diagnostics = { version = "0.3.0", default-features = false }
 hardlight = "2.0.0"
 tracing = "0.1.40"
+
+[features]
+fps_counter = []

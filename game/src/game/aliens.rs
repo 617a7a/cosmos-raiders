@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::{ships::Laser, Score};
 
-use super::AtlasIndexable;
+use super::{AtlasIndexable, Spawnable, AssetHandles};
 
 #[derive(Component, Default)]
 pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize>;
@@ -138,5 +138,21 @@ impl<const P: u32, const I: usize> Alien<P, I> {
             }
         }
     }
+
+    pub fn respawn_sys(aliens: Query<(Entity, &Alien<P, I>, &Transform)>, mut commands: Commands, asset_handles: Res<AssetHandles>) {
+        if aliens.iter().len() == 0 {
+            spawn_aliens(&mut commands, &asset_handles.texture_atlas)
+        }
+    }
 }
 const SCREEN_BOUNDARY_X: f32 = 300.0;
+
+pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<TextureAtlas>) {
+    for alien_row in 0..2 {
+        let y = 200.0 - (alien_row as f32 * 30.0);
+        for alien_col in 0..11 {
+            let x = -300.0 + (alien_col as f32 * 30.0);
+            LowLevelAlien::spawn(Vec3::new(x, y, 0.0), texture_atlas_handle.clone(), commands);
+        }
+    }
+}

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_framepace::FramepacePlugin;
+#[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use bevy_tokio_tasks::TokioTasksPlugin;
 use game::{aliens::AlienMovement, Score};
@@ -46,17 +47,20 @@ fn main() {
                 game::ships::Laser::movement_sys,
                 game::aliens::LowLevelAlien::movement_sys,
                 game::aliens::LowLevelAlien::laser_collision_sys,
+                game::aliens::LowLevelAlien::respawn_sys,
                 game::update_scoreboard_sys,
             )
                 .run_if(in_state(GameState::InGame)),
         )
         .add_plugins((
             TokioTasksPlugin::default(),
+            #[cfg(feature = "fps_counter")]
             ScreenDiagnosticsPlugin {
                 timestep: 0.1,
                 font: Some("fonts/space_invaders.ttf"),
                 ..default()
             },
+         #[cfg(feature = "fps_counter")]
             ScreenFrameDiagnosticsPlugin,
             FramepacePlugin,
         ))
