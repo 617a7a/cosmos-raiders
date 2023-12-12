@@ -32,7 +32,7 @@ impl<const P: u32, const I: usize> AtlasIndexable for Alien<P, I> {
 
 impl<const P: u32, const I: usize> Alien<P, I> {
     const VELOCITY: f32 = 100.0; // pixels per second
-    const COLLISION_RADIUS: f32 = 2.0 * 12.0;
+    const COLLISION_RADIUS: f32 = 2. * 16.;
     const DOWN_STEP_Y: f32 = 24.0;
     const POINT_VALUE: u32 = P;
 
@@ -163,7 +163,7 @@ const SCREEN_BOUNDARY_X: f32 = 300.0;
 
 pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<TextureAtlas>) {
     for alien_row in 0..5 {
-        let y = 200.0 - (alien_row as f32 * 32.0);
+        let y = 116.0 - (alien_row as f32 * 32.0);
         for alien_col in 0..11 {
             let x = -300.0 + (alien_col as f32 * 32.0);
             LowLevelAlien::spawn(Vec3::new(x, y, 0.0), texture_atlas_handle.clone(), commands);

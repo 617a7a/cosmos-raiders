@@ -1,5 +1,6 @@
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_framepace::FramepacePlugin;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use bevy_tokio_tasks::TokioTasksPlugin;
@@ -19,11 +20,12 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Cosmos Raiders".to_string(),
-                resolution: WindowResolution::new(700.0, 700.0),
+                resolution: WindowResolution::new(852.0, 393.0),
                 ..default()
             }),
             ..default()
         }))
+        // .add_plugins(WorldInspectorPlugin::new())
         // background color
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_state::<GameState>()

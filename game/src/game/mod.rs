@@ -58,7 +58,7 @@ pub fn setup_sys(
     });
 
     PlayerShip::spawn(
-        Vec3::new(0.0, -220.0, 0.0),
+        Vec3::new(0.0, -130.0, 0.0),
         texture_atlas_handle.clone(),
         &mut commands,
     );

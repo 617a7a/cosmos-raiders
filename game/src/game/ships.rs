@@ -45,6 +45,7 @@ impl PlayerShip {
         time: Res<Time>,
         mut commands: Commands,
         mut player_ships: Query<(&mut PlayerShip, &mut Transform, &Handle<TextureAtlas>)>,
+        lasers: Query<(), With<Laser>>,
         windows: Query<&Window, With<PrimaryWindow>>,
         asset_handles: Res<AssetHandles>,
     ) {
@@ -59,13 +60,18 @@ impl PlayerShip {
                 player.accelerate_left(dt)
             }
 
-            if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::A) {
+            if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
                 player.accelerate_right(dt)
             }
 
             player.apply_delta_x(&mut trans.translation, window.width());
 
-            if keyboard_input.just_pressed(KeyCode::Space) {
+            if keyboard_input.just_pressed(KeyCode::Space)
+                || keyboard_input.just_pressed(KeyCode::Return)
+            {
+                if lasers.iter().count() > 0 {
+                    continue;
+                }
                 PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
                 commands.spawn(AudioBundle {
                     source: asset_handles.shoot_sound.clone(),
