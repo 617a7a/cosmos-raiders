@@ -1,3 +1,4 @@
+use crate::game::aliens::{Alien, AlienMarker};
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_framepace::FramepacePlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -5,8 +6,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use bevy_spatial::{AutomaticUpdate, SpatialStructure, TransformMode};
 use bevy_tokio_tasks::TokioTasksPlugin;
-use game::{aliens::AlienMovement, scoreboard::Score};
-use crate::game::aliens::{Alien, AlienMarker};
+use game::{aliens::AlienMovement, collisions::load_collision_matrices, scoreboard::Score};
 
 mod game;
 mod ui;
@@ -29,12 +29,17 @@ fn main() {
             ..default()
         }))
         // .add_plugins(WorldInspectorPlugin::new())
-        .add_plugins(AutomaticUpdate::<AlienMarker>::new().with_transform(TransformMode::GlobalTransform).with_spatial_ds(SpatialStructure::KDTree2))
+        .add_plugins(
+            AutomaticUpdate::<AlienMarker>::new()
+                .with_transform(TransformMode::GlobalTransform)
+                .with_spatial_ds(SpatialStructure::KDTree2),
+        )
         // background color
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_state::<GameState>()
         .insert_resource(AlienMovement::default())
         .insert_resource(Score(0))
+        .insert_resource(load_collision_matrices())
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2dBundle::default());
         })

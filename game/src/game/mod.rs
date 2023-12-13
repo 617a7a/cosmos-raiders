@@ -1,4 +1,5 @@
 pub mod aliens;
+pub mod collisions;
 pub mod explosions;
 pub mod scoreboard;
 pub mod shields;

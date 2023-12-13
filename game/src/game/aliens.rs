@@ -5,7 +5,11 @@ use bevy_spatial::SpatialAccess;
 
 use crate::game::ships::Laser;
 
-use super::{explosions::Explosion, AssetHandles, Spawnable};
+use super::{
+    collisions::{collide, CollisionMatrices},
+    explosions::Explosion,
+    AssetHandles, AtlasIndexable, Spawnable,
+};
 
 #[derive(Component, Default)]
 pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize>;
@@ -21,7 +25,8 @@ pub enum AlienMovement {
     },
 }
 
-/// Marker component for aliens. Allows us to do fast spatial lookups for collision detection.
+/// Marker component for aliens. Allows us to do fast spatial lookups for
+/// collision detection.
 #[derive(Component, Default)]
 pub struct AlienMarker;
 
@@ -44,7 +49,7 @@ impl<const P: u32, const I: usize> Spawnable for Alien<P, I> {
                 sprite: TextureAtlasSprite::new(I),
                 ..Default::default()
             },
-            AlienMarker
+            AlienMarker,
         ));
     }
 }
@@ -80,7 +85,8 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         mut commands: Commands,
         mut score: ResMut<Score>,
         asset_handles: Res<AssetHandles>,
-        alien_spatial_tree: Res<AlienSpatialTree>
+        alien_spatial_tree: Res<AlienSpatialTree>,
+        matrices: Res<CollisionMatrices>,
     ) {
         let (laser_entity, laser_transform) = match lasers.get_single() {
             Ok(laser) => laser,
@@ -95,8 +101,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                 None => return,
             };
 
-            if alien_pos.distance(laser_pos) < Self::COLLISION_RADIUS
-            {
+            if collide(&matrices, Laser::SPRITE_INDEX, I, laser_pos, alien_pos) {
                 commands.entity(alien_entity).despawn();
                 commands.entity(laser_entity).despawn();
                 score.0 += Self::POINT_VALUE;
@@ -110,7 +115,6 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                     &mut commands,
                 );
             }
-
         }
     }
 
