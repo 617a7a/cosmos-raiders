@@ -1,12 +1,14 @@
-use crate::game::aliens::{Alien, AlienMarker};
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_framepace::FramepacePlugin;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use bevy_spatial::{AutomaticUpdate, SpatialStructure, TransformMode};
 use bevy_tokio_tasks::TokioTasksPlugin;
-use game::{aliens::AlienMovement, collisions::load_collision_matrices, scoreboard::Score};
+use game::{
+    aliens::{AlienMovement, AlienVelocity, HighLevelAlien, LowLevelAlien, MidLevelAlien},
+    collisions::load_collision_matrices,
+    scoreboard::Score,
+};
 
 mod game;
 mod ui;
@@ -29,17 +31,24 @@ fn main() {
             ..default()
         }))
         // .add_plugins(WorldInspectorPlugin::new())
-        .add_plugins(
-            AutomaticUpdate::<AlienMarker>::new()
+        .add_plugins((
+            AutomaticUpdate::<LowLevelAlien>::new()
                 .with_transform(TransformMode::GlobalTransform)
                 .with_spatial_ds(SpatialStructure::KDTree2),
-        )
+            AutomaticUpdate::<MidLevelAlien>::new()
+                .with_transform(TransformMode::GlobalTransform)
+                .with_spatial_ds(SpatialStructure::KDTree2),
+            AutomaticUpdate::<HighLevelAlien>::new()
+                .with_transform(TransformMode::GlobalTransform)
+                .with_spatial_ds(SpatialStructure::KDTree2),
+        ))
         // background color
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
         .add_state::<GameState>()
         .insert_resource(AlienMovement::default())
         .insert_resource(Score(0))
         .insert_resource(load_collision_matrices())
+        .insert_resource(AlienVelocity::default())
         .add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Camera2dBundle::default());
         })
@@ -57,13 +66,11 @@ fn main() {
             (
                 game::ships::PlayerShip::movement_sys,
                 game::ships::Laser::movement_sys,
-                game::aliens::LowLevelAlien::movement_sys,
+                game::aliens::movement_sys,
                 game::aliens::LowLevelAlien::laser_collision_sys,
                 game::aliens::LowLevelAlien::respawn_sys,
-                game::aliens::MidLevelAlien::movement_sys,
                 game::aliens::MidLevelAlien::laser_collision_sys,
                 game::aliens::MidLevelAlien::respawn_sys,
-                game::aliens::HighLevelAlien::movement_sys,
                 game::aliens::HighLevelAlien::laser_collision_sys,
                 game::aliens::HighLevelAlien::respawn_sys,
                 game::scoreboard::update_sys,

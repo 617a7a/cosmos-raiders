@@ -23,12 +23,12 @@ impl PlayerShip {
         );
     }
 
-    fn accelerate_left(&mut self, dt: f32) {
-        self.delta_x -= PlayerShip::ACCELERATION * dt;
+    fn accelerate_left(&mut self, dt: f32, multiplier: f32) {
+        self.delta_x -= PlayerShip::ACCELERATION * dt * multiplier;
     }
 
-    fn accelerate_right(&mut self, dt: f32) {
-        self.delta_x += PlayerShip::ACCELERATION * dt;
+    fn accelerate_right(&mut self, dt: f32, multiplier: f32) {
+        self.delta_x += PlayerShip::ACCELERATION * dt * multiplier;
     }
 
     fn apply_delta_x(&mut self, pos: &mut Vec3, window_width: f32) {
@@ -42,6 +42,9 @@ impl PlayerShip {
 
     pub fn movement_sys(
         keyboard_input: Res<Input<KeyCode>>,
+        button_axes: Res<Axis<GamepadButton>>,
+        gamepads: Res<Gamepads>,
+        axes: Res<Axis<GamepadAxis>>,
         time: Res<Time>,
         mut commands: Commands,
         mut player_ships: Query<(&mut PlayerShip, &mut Transform, &Handle<TextureAtlas>)>,
@@ -55,28 +58,45 @@ impl PlayerShip {
             return;
         };
 
-        for (mut player, mut trans, atlas_handle) in player_ships.iter_mut() {
-            if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-                player.accelerate_left(dt)
-            }
-
-            if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-                player.accelerate_right(dt)
-            }
-
-            player.apply_delta_x(&mut trans.translation, window.width());
-
-            if keyboard_input.just_pressed(KeyCode::Space)
-                || keyboard_input.just_pressed(KeyCode::Return)
-            {
-                if lasers.iter().count() > 0 {
-                    continue;
+        for gamepad in gamepads.iter() {
+            for (mut player, mut trans, atlas_handle) in player_ships.iter_mut() {
+                let left_stick_x = axes
+                    .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
+                    .unwrap();
+                if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+                    player.accelerate_left(dt, 1.)
+                } else if left_stick_x < -0.01 {
+                    player.accelerate_left(dt, left_stick_x.abs())
                 }
-                PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
-                commands.spawn(AudioBundle {
-                    source: asset_handles.shoot_sound.clone(),
-                    ..default()
-                });
+
+                if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+                    player.accelerate_right(dt, 1.)
+                } else if left_stick_x > 0.01 {
+                    player.accelerate_right(dt, left_stick_x)
+                }
+
+                player.apply_delta_x(&mut trans.translation, window.width());
+
+                let right_trigger = button_axes
+                    .get(GamepadButton::new(
+                        gamepad,
+                        GamepadButtonType::RightTrigger2,
+                    ))
+                    .unwrap();
+
+                if keyboard_input.just_pressed(KeyCode::Space)
+                    || keyboard_input.just_pressed(KeyCode::Return)
+                    || right_trigger > 0.01
+                {
+                    if lasers.iter().count() > 0 {
+                        continue;
+                    }
+                    PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
+                    commands.spawn(AudioBundle {
+                        source: asset_handles.shoot_sound.clone(),
+                        ..default()
+                    });
+                }
             }
         }
     }

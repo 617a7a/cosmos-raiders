@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-const SCOREBOARD_FONT_SIZE: f32 = 20.0;
+const SCOREBOARD_FONT_SIZE: f32 = 32.0;
 const SCOREBOARD_TEXT_PADDING: Val = Val::Px(36.0);
 const TEXT_COLOR: Color = Color::rgb(1.0, 1.0, 1.0);
 

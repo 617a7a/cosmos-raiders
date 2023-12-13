@@ -1,5 +1,10 @@
+use std::time::Duration;
+
 use crate::game::scoreboard::Score;
-use bevy::prelude::*;
+use bevy::{
+    input::gamepad::{GamepadRumbleIntensity, GamepadRumbleRequest},
+    prelude::*,
+};
 use bevy_spatial::kdtree::KDTree2;
 use bevy_spatial::SpatialAccess;
 
@@ -25,12 +30,14 @@ pub enum AlienMovement {
     },
 }
 
-/// Marker component for aliens. Allows us to do fast spatial lookups for
-/// collision detection.
-#[derive(Component, Default)]
-pub struct AlienMarker;
+#[derive(Copy, Clone, Resource, PartialEq, Deref, DerefMut)]
+pub struct AlienVelocity(pub f32);
 
-pub type AlienSpatialTree = KDTree2<AlienMarker>;
+impl Default for AlienVelocity {
+    fn default() -> Self {
+        Self(100.)
+    }
+}
 
 /// A low-level alien is an alien with 10 points and sprite index 1.
 pub type LowLevelAlien = Alien<10, 4>;
@@ -39,25 +46,11 @@ pub type MidLevelAlien = Alien<20, 2>;
 /// A high-level alien is an alien with 30 points and sprite index 3.
 pub type HighLevelAlien = Alien<30, 3>;
 
-impl<const P: u32, const I: usize> Spawnable for Alien<P, I> {
-    fn spawn(pos: Vec3, texture_atlas: Handle<TextureAtlas>, commands: &mut Commands) {
-        commands.spawn((
-            Self::default(),
-            SpriteSheetBundle {
-                texture_atlas,
-                transform: Transform::from_translation(pos),
-                sprite: TextureAtlasSprite::new(I),
-                ..Default::default()
-            },
-            AlienMarker,
-        ));
-    }
+impl<const P: u32, const I: usize> AtlasIndexable for Alien<P, I> {
+    const SPRITE_INDEX: usize = I;
 }
 
 impl<const P: u32, const I: usize> Alien<P, I> {
-    const VELOCITY: f32 = 100.0; // pixels per second
-    const COLLISION_RADIUS: f32 = 2. * 16.;
-    const DOWN_STEP_Y: f32 = 24.0;
     const POINT_VALUE: u32 = P;
 
     fn next_pos(&self, movement: AlienMovement, mut current: Vec3, ds: f32) -> Vec3 {
@@ -85,8 +78,10 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         mut commands: Commands,
         mut score: ResMut<Score>,
         asset_handles: Res<AssetHandles>,
-        alien_spatial_tree: Res<AlienSpatialTree>,
+        alien_spatial_tree: Res<KDTree2<Self>>,
         matrices: Res<CollisionMatrices>,
+        mut rumble_requests: EventWriter<GamepadRumbleRequest>,
+        gamepads: Res<Gamepads>,
     ) {
         let (laser_entity, laser_transform) = match lasers.get_single() {
             Ok(laser) => laser,
@@ -114,67 +109,12 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                     asset_handles.texture_atlas.clone(),
                     &mut commands,
                 );
-            }
-        }
-    }
-
-    pub fn movement_sys(
-        time: Res<Time>,
-        mut query: Query<&mut Transform, With<Alien<P, I>>>,
-        mut movement: ResMut<AlienMovement>,
-    ) {
-        let dt = time.delta_seconds();
-        let pixels_moved_this_frame = Self::VELOCITY * dt;
-
-        match *movement {
-            AlienMovement::Left => {
-                for mut transform in query.iter_mut() {
-                    transform.translation.x -= pixels_moved_this_frame;
-                }
-                let left_most_position = query
-                    .iter()
-                    .map(|t| t.translation.x)
-                    .fold(f32::INFINITY, f32::min);
-                if left_most_position <= -SCREEN_BOUNDARY_X {
-                    *movement = AlienMovement::Down {
-                        pixels_left_to_move: Self::DOWN_STEP_Y,
-                        should_move_left_after: false,
-                    };
-                }
-            }
-            AlienMovement::Right => {
-                for mut transform in query.iter_mut() {
-                    transform.translation.x += pixels_moved_this_frame;
-                }
-                let right_most_position = query
-                    .iter()
-                    .map(|t| t.translation.x)
-                    .fold(f32::NEG_INFINITY, f32::max);
-                if right_most_position >= SCREEN_BOUNDARY_X {
-                    *movement = AlienMovement::Down {
-                        pixels_left_to_move: Self::DOWN_STEP_Y,
-                        should_move_left_after: true,
-                    };
-                }
-            }
-            AlienMovement::Down {
-                ref mut pixels_left_to_move,
-                should_move_left_after,
-            } => {
-                for mut transform in query.iter_mut() {
-                    // Move the alien down
-                    let move_down = f32::min(*pixels_left_to_move, pixels_moved_this_frame);
-                    transform.translation.y -= move_down;
-                }
-                *pixels_left_to_move -= pixels_moved_this_frame;
-
-                // If the aliens have finished moving down, change horizontal direction
-                if *pixels_left_to_move <= 0.0 {
-                    *movement = if should_move_left_after {
-                        AlienMovement::Left
-                    } else {
-                        AlienMovement::Right
-                    };
+                for gamepad in gamepads.iter() {
+                    rumble_requests.send(GamepadRumbleRequest::Add {
+                        gamepad,
+                        intensity: GamepadRumbleIntensity::STRONG_MAX,
+                        duration: Duration::from_millis(1000),
+                    });
                 }
             }
         }
@@ -194,7 +134,7 @@ const SCREEN_BOUNDARY_X: f32 = 300.0;
 
 pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<TextureAtlas>) {
     for alien_row in 0..5 {
-        let y = 300.0 - (alien_row as f32 * 32.0);
+        let y = 200.0 - (alien_row as f32 * 32.0);
         for alien_col in 0..11 {
             let x = -300.0 + (alien_col as f32 * 32.0);
             match alien_row {
@@ -214,6 +154,78 @@ pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<Textu
                     commands,
                 ),
                 _ => unreachable!(),
+            }
+        }
+    }
+}
+
+const DOWN_STEP_Y: f32 = 24.0;
+
+pub fn movement_sys(
+    time: Res<Time>,
+    mut query: Query<
+        &mut Transform,
+        Or<(
+            With<LowLevelAlien>,
+            With<MidLevelAlien>,
+            With<HighLevelAlien>,
+        )>,
+    >,
+    mut movement: ResMut<AlienMovement>,
+    velocity: Res<AlienVelocity>,
+) {
+    let dt = time.delta_seconds();
+    let pixels_moved_this_frame = **velocity * dt;
+
+    match *movement {
+        AlienMovement::Left => {
+            for mut transform in query.iter_mut() {
+                transform.translation.x -= pixels_moved_this_frame;
+            }
+            let left_most_position = query
+                .iter()
+                .map(|t| t.translation.x)
+                .fold(f32::INFINITY, f32::min);
+            if left_most_position <= -SCREEN_BOUNDARY_X {
+                *movement = AlienMovement::Down {
+                    pixels_left_to_move: DOWN_STEP_Y,
+                    should_move_left_after: false,
+                };
+            }
+        }
+        AlienMovement::Right => {
+            for mut transform in query.iter_mut() {
+                transform.translation.x += pixels_moved_this_frame;
+            }
+            let right_most_position = query
+                .iter()
+                .map(|t| t.translation.x)
+                .fold(f32::NEG_INFINITY, f32::max);
+            if right_most_position >= SCREEN_BOUNDARY_X {
+                *movement = AlienMovement::Down {
+                    pixels_left_to_move: DOWN_STEP_Y,
+                    should_move_left_after: true,
+                };
+            }
+        }
+        AlienMovement::Down {
+            ref mut pixels_left_to_move,
+            should_move_left_after,
+        } => {
+            for mut transform in query.iter_mut() {
+                // Move the alien down
+                let move_down = f32::min(*pixels_left_to_move, pixels_moved_this_frame);
+                transform.translation.y -= move_down;
+            }
+            *pixels_left_to_move -= pixels_moved_this_frame;
+
+            // If the aliens have finished moving down, change horizontal direction
+            if *pixels_left_to_move <= 0.0 {
+                *movement = if should_move_left_after {
+                    AlienMovement::Left
+                } else {
+                    AlienMovement::Right
+                };
             }
         }
     }
