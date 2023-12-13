@@ -4,6 +4,7 @@ pub mod explosions;
 pub mod scoreboard;
 pub mod shields;
 pub mod ships;
+pub mod gameover;
 
 use bevy::prelude::*;
 

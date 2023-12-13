@@ -1,4 +1,6 @@
+use std::time::Duration;
 use bevy::{prelude::*, window::WindowResolution};
+use bevy::time::common_conditions::on_timer;
 use bevy_framepace::FramepacePlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -64,17 +66,20 @@ fn main() {
         .add_systems(
             Update,
             (
-                game::ships::PlayerShip::movement_sys,
+                game::ships::PlayerShip::kbd_movement_sys,
+                game::ships::PlayerShip::gamepad_movement_sys,
+                game::ships::PlayerShip::firing_sys,
                 game::ships::Laser::movement_sys,
                 game::aliens::movement_sys,
+                game::aliens::respawn_sys,
+                // alternate sprites every 1sec
+                game::aliens::sprite_alternator_sys.run_if(on_timer(Duration::from_secs_f32(0.5))),
                 game::aliens::LowLevelAlien::laser_collision_sys,
-                game::aliens::LowLevelAlien::respawn_sys,
                 game::aliens::MidLevelAlien::laser_collision_sys,
-                game::aliens::MidLevelAlien::respawn_sys,
                 game::aliens::HighLevelAlien::laser_collision_sys,
-                game::aliens::HighLevelAlien::respawn_sys,
                 game::scoreboard::update_sys,
                 game::explosions::explosion_removal_sys,
+                game::gameover::game_over_sys,
             )
                 .run_if(in_state(GameState::InGame)),
         )

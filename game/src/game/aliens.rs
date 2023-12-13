@@ -16,8 +16,16 @@ use super::{
     AssetHandles, AtlasIndexable, Spawnable,
 };
 
-#[derive(Component, Default)]
-pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize>;
+#[derive(Component)]
+pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize> {
+    current_index: usize,
+}
+
+impl<const P: u32, const I: usize> Default for Alien<P, I> {
+    fn default() -> Self {
+        Self { current_index: I }
+    }
+}
 
 #[derive(Copy, Clone, Resource, PartialEq, Default)]
 pub enum AlienMovement {
@@ -39,15 +47,34 @@ impl Default for AlienVelocity {
     }
 }
 
-/// A low-level alien is an alien with 10 points and sprite index 1.
 pub type LowLevelAlien = Alien<10, 4>;
-/// A mid-level alien is an alien with 20 points and sprite index 2.
 pub type MidLevelAlien = Alien<20, 2>;
-/// A high-level alien is an alien with 30 points and sprite index 3.
-pub type HighLevelAlien = Alien<30, 3>;
+pub type HighLevelAlien = Alien<30, 0>;
 
-impl<const P: u32, const I: usize> AtlasIndexable for Alien<P, I> {
-    const SPRITE_INDEX: usize = I;
+pub type ForAnyAlien = Or<(With<LowLevelAlien>, With<MidLevelAlien>, With<HighLevelAlien>)>;
+
+#[derive(Component)]
+pub struct CurrentSpriteIndex {
+    original: usize,
+    current: usize,
+}
+
+impl<const P: u32, const I: usize> Spawnable for Alien<P, I> {
+    fn spawn(pos: Vec3, texture_atlas: Handle<TextureAtlas>, commands: &mut Commands) {
+        commands.spawn((
+            Alien::<P, I>::default(),
+            CurrentSpriteIndex {
+                original: I,
+                current: I,
+            },
+            SpriteSheetBundle {
+                texture_atlas,
+                transform: Transform::from_translation(pos),
+                sprite: TextureAtlasSprite::new(I),
+                ..Default::default()
+            },
+        ));
+    }
 }
 
 impl<const P: u32, const I: usize> Alien<P, I> {
@@ -79,6 +106,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         mut score: ResMut<Score>,
         asset_handles: Res<AssetHandles>,
         alien_spatial_tree: Res<KDTree2<Self>>,
+        alien_sprite_indices: Query<&CurrentSpriteIndex, With<Self>>,
         matrices: Res<CollisionMatrices>,
         mut rumble_requests: EventWriter<GamepadRumbleRequest>,
         gamepads: Res<Gamepads>,
@@ -96,7 +124,12 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                 None => return,
             };
 
-            if collide(&matrices, Laser::SPRITE_INDEX, I, laser_pos, alien_pos) {
+            let alien_sprite_index = match alien_sprite_indices.get(alien_entity) {
+                Ok(sprite_index) => sprite_index,
+                Err(_) => return,
+            };
+
+            if collide(&matrices, Laser::SPRITE_INDEX, alien_sprite_index.current, laser_pos, alien_pos) {
                 commands.entity(alien_entity).despawn();
                 commands.entity(laser_entity).despawn();
                 score.0 += Self::POINT_VALUE;
@@ -117,16 +150,6 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                     });
                 }
             }
-        }
-    }
-
-    pub fn respawn_sys(
-        aliens: Query<(Entity, &Alien<P, I>, &Transform)>,
-        mut commands: Commands,
-        asset_handles: Res<AssetHandles>,
-    ) {
-        if aliens.iter().len() == 0 {
-            spawn_aliens(&mut commands, &asset_handles.texture_atlas)
         }
     }
 }
@@ -228,5 +251,28 @@ pub fn movement_sys(
                 };
             }
         }
+    }
+}
+
+pub fn respawn_sys(
+    aliens: Query<(), ForAnyAlien>,
+    mut commands: Commands,
+    asset_handles: Res<AssetHandles>,
+) {
+    if aliens.iter().len() == 0 {
+        spawn_aliens(&mut commands, &asset_handles.texture_atlas)
+    }
+}
+
+pub fn sprite_alternator_sys(
+    mut aliens: Query<(&mut CurrentSpriteIndex, &mut TextureAtlasSprite), ForAnyAlien>,
+) {
+    for (mut current_sprite_index, mut sprite) in aliens.iter_mut() {
+        if current_sprite_index.current == current_sprite_index.original {
+            current_sprite_index.current = current_sprite_index.original + 1;
+        } else {
+            current_sprite_index.current = current_sprite_index.original;
+        }
+        sprite.index = current_sprite_index.current;
     }
 }

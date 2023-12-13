@@ -23,11 +23,7 @@ impl PlayerShip {
         );
     }
 
-    fn accelerate_left(&mut self, dt: f32, multiplier: f32) {
-        self.delta_x -= PlayerShip::ACCELERATION * dt * multiplier;
-    }
-
-    fn accelerate_right(&mut self, dt: f32, multiplier: f32) {
+    fn accelerate(&mut self, dt: f32, multiplier: f32) {
         self.delta_x += PlayerShip::ACCELERATION * dt * multiplier;
     }
 
@@ -40,17 +36,11 @@ impl PlayerShip {
         self.delta_x *= 0.8;
     }
 
-    pub fn movement_sys(
+    pub fn kbd_movement_sys(
         keyboard_input: Res<Input<KeyCode>>,
-        button_axes: Res<Axis<GamepadButton>>,
-        gamepads: Res<Gamepads>,
-        axes: Res<Axis<GamepadAxis>>,
         time: Res<Time>,
-        mut commands: Commands,
-        mut player_ships: Query<(&mut PlayerShip, &mut Transform, &Handle<TextureAtlas>)>,
-        lasers: Query<(), With<Laser>>,
+        mut player_ships: Query<(&mut PlayerShip, &mut Transform)>,
         windows: Query<&Window, With<PrimaryWindow>>,
-        asset_handles: Res<AssetHandles>,
     ) {
         let dt = time.delta_seconds();
 
@@ -58,45 +48,101 @@ impl PlayerShip {
             return;
         };
 
-        for gamepad in gamepads.iter() {
-            for (mut player, mut trans, atlas_handle) in player_ships.iter_mut() {
-                let left_stick_x = axes
-                    .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
-                    .unwrap();
-                if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-                    player.accelerate_left(dt, 1.)
-                } else if left_stick_x < -0.01 {
-                    player.accelerate_left(dt, left_stick_x.abs())
+        let Ok((mut player, mut trans)) = player_ships.get_single_mut() else {
+            return;
+        };
+        if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+            player.accelerate(dt, -1.)
+        }
+
+        if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+            player.accelerate(dt, 1.)
+        }
+
+        player.apply_delta_x(&mut trans.translation, window.width());
+    }
+
+    pub fn gamepad_movement_sys(
+        gamepads: Res<Gamepads>,
+        axes: Res<Axis<GamepadAxis>>,
+        button_inputs: Res<Input<GamepadButton>>,
+        time: Res<Time>,
+        mut player_ships: Query<(&mut PlayerShip, &mut Transform)>,
+        windows: Query<&Window, With<PrimaryWindow>>,
+    ) {
+        let dt = time.delta_seconds();
+
+        let Ok(window) = windows.get_single() else {
+            return;
+        };
+
+        let Ok((mut player, mut trans)) = player_ships.get_single_mut() else {
+            return;
+        };
+
+        let Some(gamepad) = gamepads.iter().nth(0) else { return; };
+
+        let dpad_left = button_inputs.pressed(GamepadButton::new(
+            gamepad,
+            GamepadButtonType::DPadLeft,
+        ));
+        let dpad_right = button_inputs.pressed(GamepadButton::new(
+            gamepad,
+            GamepadButtonType::DPadRight,
+        ));
+
+        let left_stick_x = axes
+            .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
+            .unwrap();
+
+        if dpad_left {
+            player.accelerate(dt, -1.)
+        } else if dpad_right {
+            player.accelerate(dt, 1.)
+        } else if left_stick_x < -0.01 || left_stick_x > 0.01 {
+            player.accelerate(dt, left_stick_x)
+        }
+
+        player.apply_delta_x(&mut trans.translation, window.width());
+    }
+
+    pub fn firing_sys(
+        keyboard_input: Res<Input<KeyCode>>,
+        button_inputs: Res<Input<GamepadButton>>,
+        gamepads: Res<Gamepads>,
+        mut commands: Commands,
+        player_ships: Query<(&mut Transform, &Handle<TextureAtlas>), With<PlayerShip>>,
+        lasers: Query<(), With<Laser>>,
+        asset_handles: Res<AssetHandles>,
+    ) {
+        for (trans, atlas_handle) in player_ships.iter() {
+            let gamepad_fired = if let Some(gp) = gamepads.iter().nth(0) {
+                let trigger_down = button_inputs.just_pressed(GamepadButton::new(
+                    gp,
+                    GamepadButtonType::RightTrigger2,
+                ));
+
+                let button_down = button_inputs.just_pressed(GamepadButton::new(
+                    gp,
+                    GamepadButtonType::South,
+                ));
+
+                trigger_down || button_down
+            } else { false };
+
+            let kbd_fired = keyboard_input.just_pressed(KeyCode::Space)
+                || keyboard_input.just_pressed(KeyCode::Return);
+
+            if kbd_fired || gamepad_fired
+            {
+                if lasers.iter().count() > 0 {
+                    return;
                 }
-
-                if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-                    player.accelerate_right(dt, 1.)
-                } else if left_stick_x > 0.01 {
-                    player.accelerate_right(dt, left_stick_x)
-                }
-
-                player.apply_delta_x(&mut trans.translation, window.width());
-
-                let right_trigger = button_axes
-                    .get(GamepadButton::new(
-                        gamepad,
-                        GamepadButtonType::RightTrigger2,
-                    ))
-                    .unwrap();
-
-                if keyboard_input.just_pressed(KeyCode::Space)
-                    || keyboard_input.just_pressed(KeyCode::Return)
-                    || right_trigger > 0.01
-                {
-                    if lasers.iter().count() > 0 {
-                        continue;
-                    }
-                    PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
-                    commands.spawn(AudioBundle {
-                        source: asset_handles.shoot_sound.clone(),
-                        ..default()
-                    });
-                }
+                PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
+                commands.spawn(AudioBundle {
+                    source: asset_handles.shoot_sound.clone(),
+                    ..default()
+                });
             }
         }
     }

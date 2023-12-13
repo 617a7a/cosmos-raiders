@@ -8,9 +8,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="aefd1605-8be6-4f3e-b0fd-617d0911fc1b" name="Changes" comment="Use spatial trees and start work on multiple alien types">
-      <change afterPath="$PROJECT_DIR$/game/src/game/gameover.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/game/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/game/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/game/src/game/aliens.rs" beforeDir="false" afterPath="$PROJECT_DIR$/game/src/game/aliens.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/game/src/game/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/game/src/game/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/game/src/game/ships.rs" beforeDir="false" afterPath="$PROJECT_DIR$/game/src/game/ships.rs" afterDir="false" />
@@ -109,7 +106,7 @@
       <workItem from="1702481744053" duration="2179000" />
       <workItem from="1702484400951" duration="1422000" />
       <workItem from="1702486133385" duration="5553000" />
-      <workItem from="1702494089786" duration="2818000" />
+      <workItem from="1702494089786" duration="2997000" />
     </task>
     <task id="LOCAL-00001" summary="Use spatial trees and start work on multiple alien types">
       <option name="closed" value="true" />
