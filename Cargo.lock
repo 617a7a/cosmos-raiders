@@ -972,8 +972,7 @@ dependencies = [
 [[package]]
 name = "bevy_spatial"
 version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d7afe191bc2344f113d2159c2ebb7bdc673413e877036d5bdf40374bd252205"
+source = "git+https://github.com/617a7a/bevy-spatial#f38f1b7f0d0c39e81ff1b60cf8f4231383e74088"
 dependencies = [
  "bevy",
  "kd-tree",
