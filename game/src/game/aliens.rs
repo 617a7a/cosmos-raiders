@@ -16,16 +16,8 @@ use super::{
     AssetHandles, AtlasIndexable, Spawnable,
 };
 
-#[derive(Component)]
-pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize> {
-    current_index: usize,
-}
-
-impl<const P: u32, const I: usize> Default for Alien<P, I> {
-    fn default() -> Self {
-        Self { current_index: I }
-    }
-}
+#[derive(Component, Default)]
+pub struct Alien<const POINT_VALUE: u32, const SPRITE_INDEX: usize>;
 
 #[derive(Copy, Clone, Resource, PartialEq, Default)]
 pub enum AlienMovement {
@@ -51,7 +43,11 @@ pub type LowLevelAlien = Alien<10, 4>;
 pub type MidLevelAlien = Alien<20, 2>;
 pub type HighLevelAlien = Alien<30, 0>;
 
-pub type ForAnyAlien = Or<(With<LowLevelAlien>, With<MidLevelAlien>, With<HighLevelAlien>)>;
+pub type ForAnyAlien = Or<(
+    With<LowLevelAlien>,
+    With<MidLevelAlien>,
+    With<HighLevelAlien>,
+)>;
 
 #[derive(Component)]
 pub struct CurrentSpriteIndex {
@@ -79,26 +75,6 @@ impl<const P: u32, const I: usize> Spawnable for Alien<P, I> {
 
 impl<const P: u32, const I: usize> Alien<P, I> {
     const POINT_VALUE: u32 = P;
-
-    fn next_pos(&self, movement: AlienMovement, mut current: Vec3, ds: f32) -> Vec3 {
-        match movement {
-            AlienMovement::Left | AlienMovement::Right => {
-                if movement == AlienMovement::Left {
-                    current.x -= ds;
-                } else {
-                    current.x += ds;
-                }
-                current
-            }
-            AlienMovement::Down {
-                pixels_left_to_move,
-                ..
-            } => {
-                current.y -= f32::max(0.0, pixels_left_to_move - ds);
-                current
-            }
-        }
-    }
 
     pub fn laser_collision_sys(
         lasers: Query<(Entity, &Transform), With<Laser>>,
@@ -129,7 +105,13 @@ impl<const P: u32, const I: usize> Alien<P, I> {
                 Err(_) => return,
             };
 
-            if collide(&matrices, Laser::SPRITE_INDEX, alien_sprite_index.current, laser_pos, alien_pos) {
+            if collide(
+                &matrices,
+                Laser::SPRITE_INDEX,
+                alien_sprite_index.current,
+                laser_pos,
+                alien_pos,
+            ) {
                 commands.entity(alien_entity).despawn();
                 commands.entity(laser_entity).despawn();
                 score.0 += Self::POINT_VALUE;

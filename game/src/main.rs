@@ -1,6 +1,5 @@
-use std::time::Duration;
-use bevy::{prelude::*, window::WindowResolution};
 use bevy::time::common_conditions::on_timer;
+use bevy::{prelude::*, window::WindowResolution};
 use bevy_framepace::FramepacePlugin;
 #[cfg(feature = "fps_counter")]
 use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
@@ -11,6 +10,7 @@ use game::{
     collisions::load_collision_matrices,
     scoreboard::Score,
 };
+use std::time::Duration;
 
 mod game;
 mod ui;

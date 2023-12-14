@@ -1,3 +1,5 @@
+export MTL_HUD_ENABLED := "1"
+
 # Run in debug mode
 r:
     cargo run --features bevy/dynamic_linking -p cosmos-raiders -- --skip-menu
@@ -13,3 +15,6 @@ w:
 # Run in release mode with cargo-watch
 wr:
     cargo watch -x 'run -p cosmos-raiders -r'
+
+fmt:
+    cargo fmt

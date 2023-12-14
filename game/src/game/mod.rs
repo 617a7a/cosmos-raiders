@@ -1,10 +1,10 @@
 pub mod aliens;
 pub mod collisions;
 pub mod explosions;
+pub mod gameover;
 pub mod scoreboard;
 pub mod shields;
 pub mod ships;
-pub mod gameover;
 
 use bevy::prelude::*;
 

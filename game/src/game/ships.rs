@@ -80,16 +80,14 @@ impl PlayerShip {
             return;
         };
 
-        let Some(gamepad) = gamepads.iter().nth(0) else { return; };
+        let Some(gamepad) = gamepads.iter().nth(0) else {
+            return;
+        };
 
-        let dpad_left = button_inputs.pressed(GamepadButton::new(
-            gamepad,
-            GamepadButtonType::DPadLeft,
-        ));
-        let dpad_right = button_inputs.pressed(GamepadButton::new(
-            gamepad,
-            GamepadButtonType::DPadRight,
-        ));
+        let dpad_left =
+            button_inputs.pressed(GamepadButton::new(gamepad, GamepadButtonType::DPadLeft));
+        let dpad_right =
+            button_inputs.pressed(GamepadButton::new(gamepad, GamepadButtonType::DPadRight));
 
         let left_stick_x = axes
             .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
@@ -117,24 +115,21 @@ impl PlayerShip {
     ) {
         for (trans, atlas_handle) in player_ships.iter() {
             let gamepad_fired = if let Some(gp) = gamepads.iter().nth(0) {
-                let trigger_down = button_inputs.just_pressed(GamepadButton::new(
-                    gp,
-                    GamepadButtonType::RightTrigger2,
-                ));
+                let trigger_down = button_inputs
+                    .just_pressed(GamepadButton::new(gp, GamepadButtonType::RightTrigger2));
 
-                let button_down = button_inputs.just_pressed(GamepadButton::new(
-                    gp,
-                    GamepadButtonType::South,
-                ));
+                let button_down =
+                    button_inputs.just_pressed(GamepadButton::new(gp, GamepadButtonType::South));
 
                 trigger_down || button_down
-            } else { false };
+            } else {
+                false
+            };
 
             let kbd_fired = keyboard_input.just_pressed(KeyCode::Space)
                 || keyboard_input.just_pressed(KeyCode::Return);
 
-            if kbd_fired || gamepad_fired
-            {
+            if kbd_fired || gamepad_fired {
                 if lasers.iter().count() > 0 {
                     return;
                 }
