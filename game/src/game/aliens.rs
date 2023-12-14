@@ -87,49 +87,46 @@ impl<const P: u32, const I: usize> Alien<P, I> {
         mut rumble_requests: EventWriter<GamepadRumbleRequest>,
         gamepads: Res<Gamepads>,
     ) {
-        let (laser_entity, laser_transform) = match lasers.get_single() {
-            Ok(laser) => laser,
-            Err(_) => return,
-        };
+        for (laser_entity, laser_transform) in lasers.iter() {
+            let laser_pos = laser_transform.translation.truncate();
 
-        let laser_pos = laser_transform.translation.truncate();
+            if let Some((alien_pos, entity)) = alien_spatial_tree.nearest_neighbour(laser_pos) {
+                let alien_entity = match entity {
+                    Some(entity) => entity,
+                    None => return,
+                };
 
-        if let Some((alien_pos, entity)) = alien_spatial_tree.nearest_neighbour(laser_pos) {
-            let alien_entity = match entity {
-                Some(entity) => entity,
-                None => return,
-            };
+                let alien_sprite_index = match alien_sprite_indices.get(alien_entity) {
+                    Ok(sprite_index) => sprite_index,
+                    Err(_) => return,
+                };
 
-            let alien_sprite_index = match alien_sprite_indices.get(alien_entity) {
-                Ok(sprite_index) => sprite_index,
-                Err(_) => return,
-            };
-
-            if collide(
-                &matrices,
-                Laser::SPRITE_INDEX,
-                alien_sprite_index.current,
-                laser_pos,
-                alien_pos,
-            ) {
-                commands.entity(alien_entity).despawn();
-                commands.entity(laser_entity).despawn();
-                score.0 += Self::POINT_VALUE;
-                commands.spawn(AudioBundle {
-                    source: asset_handles.explosion_sound.clone(),
-                    ..Default::default()
-                });
-                Explosion::spawn(
-                    alien_pos.extend(0.),
-                    asset_handles.texture_atlas.clone(),
-                    &mut commands,
-                );
-                for gamepad in gamepads.iter() {
-                    rumble_requests.send(GamepadRumbleRequest::Add {
-                        gamepad,
-                        intensity: GamepadRumbleIntensity::STRONG_MAX,
-                        duration: Duration::from_millis(1000),
+                if collide(
+                    &matrices,
+                    Laser::SPRITE_INDEX,
+                    alien_sprite_index.current,
+                    laser_pos,
+                    alien_pos,
+                ) {
+                    commands.entity(alien_entity).despawn();
+                    commands.entity(laser_entity).despawn();
+                    score.0 += Self::POINT_VALUE;
+                    commands.spawn(AudioBundle {
+                        source: asset_handles.explosion_sound.clone(),
+                        ..Default::default()
                     });
+                    Explosion::spawn(
+                        alien_pos.extend(0.),
+                        asset_handles.texture_atlas.clone(),
+                        &mut commands,
+                    );
+                    for gamepad in gamepads.iter() {
+                        rumble_requests.send(GamepadRumbleRequest::Add {
+                            gamepad,
+                            intensity: GamepadRumbleIntensity::STRONG_MAX,
+                            duration: Duration::from_millis(1000),
+                        });
+                    }
                 }
             }
         }

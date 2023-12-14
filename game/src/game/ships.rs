@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{audio::PlaybackMode, prelude::*, window::PrimaryWindow};
 
 use super::{AssetHandles, AtlasIndexable, Spawnable};
 
@@ -17,7 +17,7 @@ impl PlayerShip {
 
     fn fire_laser(commands: &mut Commands, player_pos: Vec3, atlas_handle: Handle<TextureAtlas>) {
         Laser::spawn(
-            Vec3::new(player_pos.x, player_pos.y + 24.0, 0.0),
+            Vec3::new(player_pos.x, player_pos.y + 16.0, 0.0),
             atlas_handle,
             commands,
         );
@@ -136,7 +136,10 @@ impl PlayerShip {
                 PlayerShip::fire_laser(&mut commands, trans.translation, atlas_handle.clone());
                 commands.spawn(AudioBundle {
                     source: asset_handles.shoot_sound.clone(),
-                    ..default()
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        ..default()
+                    },
                 });
             }
         }
