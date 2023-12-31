@@ -31,6 +31,7 @@ pub enum AlienMovement {
 }
 
 #[derive(Copy, Clone, Resource, PartialEq, Deref, DerefMut)]
+/// A global resource storing the current velocity of all aliens.
 pub struct AlienVelocity(pub f32);
 
 impl Default for AlienVelocity {
@@ -39,10 +40,18 @@ impl Default for AlienVelocity {
     }
 }
 
+// Type aliases for different levels of aliens. Allows one implementation of
+// Alien for different aliens with different point values and sprite indices
+// statically.
+/// Low level aliens are worth 10 points and have a sprite index of 4.
 pub type LowLevelAlien = Alien<10, 4>;
+/// Mid level aliens are worth 20 points and have a sprite index of 2.
 pub type MidLevelAlien = Alien<20, 2>;
+/// High level aliens are worth 30 points and have a sprite index of 0.
 pub type HighLevelAlien = Alien<30, 0>;
 
+/// A type alias for a Bevy filter that matches any entity with a low, mid, or
+/// high level alien component.
 pub type ForAnyAlien = Or<(
     With<LowLevelAlien>,
     With<MidLevelAlien>,
@@ -50,6 +59,10 @@ pub type ForAnyAlien = Or<(
 )>;
 
 #[derive(Component)]
+/// A component that stores the original sprite index of an alien. The
+/// alternator system uses this to determine which sprite to switch to.
+/// TODO: this can be optimised in iteration 3 - this is definitely not the most
+/// efficient way to do this.
 pub struct CurrentSpriteIndex {
     original: usize,
     current: usize,
@@ -134,6 +147,7 @@ impl<const P: u32, const I: usize> Alien<P, I> {
 }
 const SCREEN_BOUNDARY_X: f32 = 300.0;
 
+/// A procedure that spawns all the aliens in the game.
 pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<TextureAtlas>) {
     for alien_row in 0..5 {
         let y = 200.0 - (alien_row as f32 * 32.0);
@@ -161,18 +175,14 @@ pub fn spawn_aliens(commands: &mut Commands, texture_atlas_handle: &Handle<Textu
     }
 }
 
+/// How many logical pixels to move the aliens down by when they hit the screen
+/// boundary.
 const DOWN_STEP_Y: f32 = 24.0;
 
+/// A system responsible for moving aliens.
 pub fn movement_sys(
     time: Res<Time>,
-    mut query: Query<
-        &mut Transform,
-        Or<(
-            With<LowLevelAlien>,
-            With<MidLevelAlien>,
-            With<HighLevelAlien>,
-        )>,
-    >,
+    mut query: Query<&mut Transform, ForAnyAlien>,
     mut movement: ResMut<AlienMovement>,
     velocity: Res<AlienVelocity>,
 ) {
@@ -233,6 +243,7 @@ pub fn movement_sys(
     }
 }
 
+/// A system that respawns aliens if there are none left.
 pub fn respawn_sys(
     aliens: Query<(), ForAnyAlien>,
     mut commands: Commands,
@@ -243,15 +254,16 @@ pub fn respawn_sys(
     }
 }
 
+/// A system that alternates the sprite of aliens.
 pub fn sprite_alternator_sys(
     mut aliens: Query<(&mut CurrentSpriteIndex, &mut TextureAtlasSprite), ForAnyAlien>,
 ) {
-    for (mut current_sprite_index, mut sprite) in aliens.iter_mut() {
-        if current_sprite_index.current == current_sprite_index.original {
-            current_sprite_index.current = current_sprite_index.original + 1;
+    for (mut csi, mut sprite) in aliens.iter_mut() {
+        if csi.current == csi.original {
+            csi.current = csi.original + 1;
         } else {
-            current_sprite_index.current = current_sprite_index.original;
+            csi.current = csi.original;
         }
-        sprite.index = current_sprite_index.current;
+        sprite.index = csi.current;
     }
 }

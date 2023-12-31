@@ -1,4 +1,5 @@
 use bevy::time::common_conditions::on_timer;
+use bevy::window::PresentMode;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_framepace::FramepacePlugin;
 #[cfg(feature = "fps_counter")]
@@ -93,7 +94,7 @@ fn main() {
             },
             #[cfg(feature = "fps_counter")]
             ScreenFrameDiagnosticsPlugin,
-            FramepacePlugin,
+            // FramepacePlugin,
         ))
         .run();
 }
